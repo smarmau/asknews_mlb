@@ -62,7 +62,7 @@ The MLB Betting Bot is designed to continuously analyze and predict MLB game out
 
 ## Powered by AskNews
 
-This bot is built on the advanced forecasting technology of AskNews. By signing up for AskNews, users can unlock the full potential of this bot, gaining access to the latest AI innovations and comprehensive data analytics. [Sign up for AskNews here](https://asknews.com/signup) to enhance your betting strategy with cutting-edge technology.
+This bot is built on the advanced forecasting technology of AskNews. By signing up for AskNews, users can unlock the full potential of this bot, gaining access to the latest AI innovations and comprehensive data analytics. [Sign up for AskNews here](https://asknews.app) to enhance your betting strategy with cutting-edge technology.
 
 ## Contributing
 
