@@ -1,7 +1,7 @@
 
-# MLB Betting Bot
+# MLB LLM/AI Betting Bot
 
-Welcome to the MLB Betting Bot! This project leverages advanced machine learning models to analyze Major League Baseball (MLB) games and make informed betting recommendations. The bot integrates cutting-edge AI forecasting from AskNews to provide top-tier insights into MLB matchups.
+Welcome to the MLB Betting Bot. This project leverages advanced machine forecast learning models to analyze Major League Baseball (MLB) games and make informed betting recommendations. The bot integrates forecasting from AskNews to provide top-tier insights into MLB matchups, using a state of the art forecating process. In addition it also utilized generalizable LLM models from GPT4, Claude and LLAMA for comparison. 
 
 ## Features
 
