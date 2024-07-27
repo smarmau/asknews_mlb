@@ -1,3 +1,4 @@
+
 import os
 import json
 from dotenv import load_dotenv
@@ -413,26 +414,30 @@ class MLBBot:
             time_until_game = (game['game_time'] - current_time).total_seconds()
 
             if 0 <= time_until_game <= 3600:  # Within 60 minutes of game start
-                tasks.append(self.process_single_game(game))
+                models = ["gpt-4o", "meta-llama/Meta-Llama-3-70B-Instruct", "claude-3-5-sonnet-20240620"]
+                forecast_models = ["claude-3-5-sonnet-20240620", "gpt-4o"]
+                
+                missing_models = await self.check_existing_predictions(game, models + [f"{m}_forecast" for m in forecast_models])
+                
+                if missing_models:
+                    tasks.append(self.process_single_game(game, missing_models))
         
         results = await asyncio.gather(*tasks, return_exceptions=True)
         for result in results:
             if isinstance(result, Exception):
                 logger.error(f"Error processing game: {str(result)}")
 
-    async def process_single_game(self, game):
+    async def process_single_game(self, game, missing_models):
         game_description = f"{game['away_team']} vs {game['home_team']}"
         logger.info(f"{Fore.CYAN}Processing game: {game_description}{Style.RESET_ALL}")
         try:
             await self.odds_cache.update_game_odds(game['id'], game['away_team'], game['home_team'])
             
             model_tasks = []
-            for model in ["gpt-4o", "meta-llama/Meta-Llama-3-70B-Instruct", "claude-3-5-sonnet-20240620"]:
-                model_tasks.append(self.process_game(game['game_data'], model))
-            
-            # Process forecasts
-            for model in ["claude-3-5-sonnet-20240620", "gpt-4o"]:
-                model_tasks.append(self.process_game(game['game_data'], model, is_forecast=True))
+            for model in missing_models:
+                is_forecast = model.endswith('_forecast')
+                actual_model = model[:-9] if is_forecast else model
+                model_tasks.append(self.process_game(game['game_data'], actual_model, is_forecast))
             
             results = await asyncio.gather(*model_tasks, return_exceptions=True)
             for result in results:
@@ -466,6 +471,63 @@ class MLBBot:
         except Exception as e:
             logger.error(f"{Fore.RED}Error processing game {game_description} with model {model}: {str(e)}{Style.RESET_ALL}")
             raise
+
+    async def check_existing_predictions(self, game, models):
+        current_date = get_current_et_time().strftime('%Y-%m-%d')
+        directory = os.path.join(self.base_directory, 'predictions', current_date)
+        game_description = f"{game['away_team']} vs {game['home_team']}"
+        
+        missing_models = []
+        for model in models:
+            filename = f"{model.replace('/', '_')}_predictions.json"
+            filepath = os.path.join(directory, filename)
+            if not os.path.exists(filepath):
+                missing_models.append(model)
+            else:
+                async with aiofiles.open(filepath, 'r') as f:
+                    content = await f.read()
+                    predictions = json.loads(content)
+                    if not any(p['game'] == game_description for p in predictions):
+                        missing_models.append(model)
+        
+        return missing_models
+
+    async def check_missing_predictions(self):
+        current_time = get_current_et_time()
+        current_date = current_time.strftime('%Y-%m-%d')
+        directory = os.path.join(self.base_directory, 'predictions', current_date)
+        
+        models = ["gpt-4o", "meta-llama/Meta-Llama-3-70B-Instruct", "claude-3-5-sonnet-20240620"]
+        forecast_models = ["claude-3-5-sonnet-20240620", "gpt-4o"]
+        
+        missing_predictions = {}
+
+        # Load all existing predictions
+        existing_predictions = {}
+        for model in models + [f"{m}_forecast" for m in forecast_models]:
+            filename = f"{model.replace('/', '_')}_predictions.json"
+            filepath = os.path.join(directory, filename)
+            if os.path.exists(filepath):
+                async with aiofiles.open(filepath, 'r') as f:
+                    content = await f.read()
+                    predictions = json.loads(content)
+                    existing_predictions[model] = {p['game']: p for p in predictions}
+
+        for game in self.today_games:
+            time_until_game = (game['game_time'] - current_time).total_seconds()
+            if 0 <= time_until_game <= 3600:  # Within 60 minutes of game start
+                game_id = game['id']
+                game_description = f"{game['away_team']} vs {game['home_team']}"
+                missing_predictions[game_id] = {'game': game, 'missing_models': []}
+                
+                for model in models + [f"{m}_forecast" for m in forecast_models]:
+                    if model not in existing_predictions or game_description not in existing_predictions[model]:
+                        missing_predictions[game_id]['missing_models'].append(model)
+                
+                if not missing_predictions[game_id]['missing_models']:
+                    del missing_predictions[game_id]
+
+        return missing_predictions
 
     async def heartbeat(self):
         current_time = get_current_et_time()
@@ -502,6 +564,26 @@ class MLBBot:
         )
         
         logger.info(heartbeat_message)
+
+        # Check for missing predictions and retry
+        missing_predictions = await self.check_missing_predictions()
+        if missing_predictions:
+            logger.info(f"{Fore.YELLOW}Found missing predictions. Details:{Style.RESET_ALL}")
+            for game_id, data in missing_predictions.items():
+                game = data['game']
+                missing_models = data['missing_models']
+                logger.info(f"{Fore.CYAN}Game: {game['away_team']} vs {game['home_team']}{Style.RESET_ALL}")
+                logger.info(f"{Fore.CYAN}Missing models: {', '.join(missing_models)}{Style.RESET_ALL}")
+                for model in missing_models:
+                    is_forecast = model.endswith('_forecast')
+                    actual_model = model[:-9] if is_forecast else model
+                    try:
+                        await self.process_game(game['game_data'], actual_model, is_forecast)
+                        logger.info(f"{Fore.GREEN}Successfully processed prediction for {game['away_team']} vs {game['home_team']} with model {model}{Style.RESET_ALL}")
+                    except Exception as e:
+                        logger.error(f"{Fore.RED}Error retrying prediction for {game['away_team']} vs {game['home_team']} with model {model}: {str(e)}{Style.RESET_ALL}")
+        else:
+            logger.info(f"{Fore.GREEN}All predictions are up to date.{Style.RESET_ALL}")
 
     def format_timedelta(self, td):
         total_seconds = int(td.total_seconds())
