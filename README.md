@@ -1,7 +1,7 @@
 
 # MLB LLM/AI Betting Bot
 
-Welcome to the MLB Betting Bot. This project leverages advanced machine forecast learning models to analyze Major League Baseball (MLB) games and make informed betting recommendations. The bot integrates forecasting from AskNews to provide top-tier insights into MLB matchups, using a state of the art forecating process. In addition it also utilized generalizable LLM models from GPT4, Claude and LLAMA for comparison. 
+Welcome to the MLB Betting Bot. This project leverages advanced machine forecast learning models to analyze Major League Baseball (MLB) games and make informed betting recommendations. The bot integrates forecasting from AskNews to provide top-tier insights into MLB matchups, using a state of the art forecating process. In addition it also utilized generalizable LLM models from GPT4o, Claude and LLAMA for comparison. 
 
 ## Features
 
@@ -23,32 +23,32 @@ Welcome to the MLB Betting Bot. This project leverages advanced machine forecast
 
 1. **Clone the repository:**
 
-   \`\`\`bash
+   ```
    git clone https://github.com/yourusername/mlb-betting-bot.git
    cd mlb-betting-bot
-   \`\`\`
+   ```
 
 2. **Install dependencies:**
 
-   \`\`\`bash
+   ```
    pip install -r requirements.txt
-   \`\`\`
+   ```
 
 3. **Set up environment variables:**
 
    Create a `.env` file in the project root directory with the following content:
 
-   \`\`\`env
+   ```
    CLIENT_ID=your_client_id
    CLIENT_SECRET=your_client_secret
    ODDS_API_KEY=your_odds_api_key
-   \`\`\`
+   ```
 
 4. **Run the bot:**
 
-   \`\`\`bash
+   ```
    python mlb_bot.py
-   \`\`\`
+   ```
 
 ## How It Works
 
@@ -56,7 +56,7 @@ The MLB Betting Bot is designed to continuously analyze and predict MLB game out
 
 1. **Data Collection:** The bot scrapes daily odds and game data from Sportsbook Review, ensuring it has the most current information available.
    
-2. **AI-Powered Analysis:** Using the state-of-the-art forecasting model provided by AskNews, the bot processes this data to generate predictions. This model combines historical game data, player statistics, and current odds to deliver highly accurate forecasts.
+2. **AI-Powered Analysis:** Using the state-of-the-art forecasting model provided by AskNews, the bot processes this data to generate predictions. This model combines news (within the last 5 mins), historical game data, player statistics, and current odds to deliver highly accurate forecasts.
    
 3. **Prediction and Insights:** The bot produces game predictions along with detailed analysis and insights, helping users make informed betting decisions.
 
