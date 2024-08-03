@@ -66,7 +66,7 @@ This bot is built on the advanced forecasting technology of AskNews. By signing 
 
 ## Contributing
 
-We welcome contributions to improve the MLB Betting Bot. If you'd like to contribute, please fork the repository, create a new branch, and submit a pull request with your changes.
+We welcome contributions to improve the MLB Betting Bot
 
 ## License
 
@@ -76,6 +76,3 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 This bot is intended for informational purposes only. Always gamble responsibly and within your means.
 
----
-
-Thank you for using the MLB Betting Bot! We hope it enhances your MLB betting experience with valuable insights and predictions.
