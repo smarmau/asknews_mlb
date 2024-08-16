@@ -15,7 +15,7 @@ Welcome to the MLB Betting Bot. This project leverages advanced machine forecast
 
 We ran this program as an experiment for a couple of weeks. Daily profit and losses for a $100 bet per game based on the bot's predictions is recorded here. 
 
-|                   | 26-Jul     | 27-Jul     | 28-Jul     | 29-Jul     | 30-Jul     | 31-Jul     | 1-Aug      | 2-Aug      | 3-Aug      | 4-Aug      | 5-Aug      | 6-Aug      | 7-Aug      | 8-Aug      | 9-Aug      | Average WR | Expectancy Total Profit |
+|                   | 26-Jul     | 27-Jul     | 28-Jul     | 29-Jul     | 30-Jul     | 31-Jul     | 1-Aug      | 2-Aug      | 3-Aug      | 4-Aug      | 5-Aug      | 6-Aug      | 7-Aug      | 8-Aug      | 9-Aug      |            | Expectancy Total Profit |
 |-------------------|------------|------------|------------|------------|------------|------------|------------|------------|------------|------------|------------|------------|------------|------------|------------|------------|------------------------|
 | llama_chat_winrate| 0.53333333 | 0.4        | 0.73333333 | 0.54545455 | 0.46666667 | 0.6        | 0.8        | 0.6        | 0.46666667 | 0.66666667 | 0.88888889 | 0.6        | 0.6        | 0.66666667 | 0.61197961 |            |                        |
 | gpt_chat_winrate  | 0.46666667 | 0.4        | 0.4        | 0.54545455 | 0.46666667 | 0.46666667 | 0.66666667 | 0.53333333 | 0.73333333 | 0.66666667 | 0.88888889 | 0.7        | 0.6        | 0.66666667 | 0.61435786 |            |                        |
