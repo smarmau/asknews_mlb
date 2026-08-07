@@ -6,7 +6,7 @@ Welcome to the MLB Betting Bot. This project leverages advanced machine forecast
 ## Features
 
 - **State-of-the-Art Forecasting:** Powered by AskNews, the bot uses sophisticated AI models to forecast game outcomes, offering highly accurate predictions.
-- **Daily Odds Scraping:** Automatically scrapes the latest odds for MLB games from Sportsbook Review, ensuring up-to-date information.
+- **Daily Odds Scraping:** Pulls latest MLB moneylines from [Lumify](https://lumify.ai) when `LUMIFY_API_KEY` is set (recommended); otherwise scrapes Sportsbook Review.
 - **Comprehensive Game Analysis:** Analyzes upcoming MLB games with detailed statistics and expert insights.
 - **Automated Workflow:** Continuously runs to fetch new game data, update predictions, and provide timely betting advice.
 - **Customizable Models:** Supports integration with multiple AI models for diverse forecasting perspectives.
@@ -35,7 +35,8 @@ We ran this program as an experiment for a couple of weeks. Daily profit and los
 - **Environment Variables:**
   - `CLIENT_ID`: Your AskNews client ID.
   - `CLIENT_SECRET`: Your AskNews client secret.
-  - `ODDS_API_KEY`: Your Odds API key.
+  - `LUMIFY_API_KEY` *(recommended)*: Lumify sports odds key — free instant key at https://lumify.ai/docs/ai. When set, moneylines come from Lumify (multi-book) instead of scraping Sportsbook Review.
+  - `ODDS_API_KEY`: Legacy / unused (kept for older `.env` files).
 
 ## Setup
 
@@ -59,7 +60,7 @@ We ran this program as an experiment for a couple of weeks. Daily profit and los
    ```
    CLIENT_ID=your_client_id
    CLIENT_SECRET=your_client_secret
-   ODDS_API_KEY=your_odds_api_key
+   LUMIFY_API_KEY=lmfy-your_lumify_key
    ```
 
 4. **Run the bot:**

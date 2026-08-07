@@ -20,6 +20,10 @@ from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_excep
 import signal
 import sys
 from colorama import Fore, Back, Style, init
+try:
+    from lumify_odds import LumifyOddsProvider
+except ImportError:
+    LumifyOddsProvider = None  # type: ignore
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -28,10 +32,14 @@ init(autoreset=True)
 load_dotenv()
 client_id_token = os.getenv('CLIENT_ID')
 client_secret_token = os.getenv('CLIENT_SECRET')
-odds_api_token = os.getenv('ODDS_API_KEY')
+odds_api_token = os.getenv('ODDS_API_KEY')  # unused legacy; kept for .env compat
+lumify_api_token = os.getenv('LUMIFY_API_KEY')
 
-if not all([client_id_token, client_secret_token, odds_api_token]):
-    raise ValueError("Missing one or more environment variables: CLIENT_ID, CLIENT_SECRET, ODDS_API_KEY")
+if not all([client_id_token, client_secret_token]):
+    raise ValueError("Missing one or more environment variables: CLIENT_ID, CLIENT_SECRET")
+# Odds: prefer Lumify (LUMIFY_API_KEY) over SportsbookReview scrape. ODDS_API_KEY is unused.
+if not lumify_api_token:
+    logger.info("LUMIFY_API_KEY not set — falling back to SportsbookReview scrape for odds")
 
 sdk = AsyncAskNewsSDK(
     client_id=client_id_token,
@@ -127,12 +135,30 @@ class OddsCache:
         games = await fetch_today_games()
         elapsed_time = time.time() - start_time
         logger.info(f"Fetching today's games took {elapsed_time:.2f} seconds")
-        
-        date = datetime.now(pytz.timezone('America/New_York')).strftime("%Y-%m-%d")
-        scraper = ScrapeSportsbookreview(sport="MLB", date=date)
-        self.odds = {game['id']: self.format_odds(game) for game in scraper.games}
+
+        if os.getenv('LUMIFY_API_KEY') and LumifyOddsProvider is not None:
+            logger.info("Using Lumify for odds (LUMIFY_API_KEY set)")
+            provider = LumifyOddsProvider()
+            scraped = await asyncio.to_thread(provider.fetch_games)
+        else:
+            date = datetime.now(pytz.timezone('America/New_York')).strftime("%Y-%m-%d")
+            scraper = ScrapeSportsbookreview(sport="MLB", date=date)
+            scraped = scraper.games
+        self.odds = {game['id']: self.format_odds(game) for game in scraped}
+        # Also index by MLB Stats API matchup for process_game lookups
+        for game in scraped:
+            for sched in games:
+                if self._teams_match(sched['away_team'], game['away_team']) and self._teams_match(sched['home_team'], game['home_team']):
+                    self.odds[sched['id']] = self.format_odds(game)
+                    self.odds[sched['game_data']['gamePk']] = self.format_odds(game)
         self.last_full_scrape = datetime.now(pytz.timezone('America/New_York'))
         logger.info("Completed daily odds scrape")
+
+    @staticmethod
+    def _teams_match(a: str, b: str) -> bool:
+        na = ''.join(ch for ch in (a or '').lower() if ch.isalnum())
+        nb = ''.join(ch for ch in (b or '').lower() if ch.isalnum())
+        return bool(na and nb and (na == nb or na in nb or nb in na))
 
     def format_odds(self, game):
         return {
@@ -143,10 +169,19 @@ class OddsCache:
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=60))
     async def update_game_odds(self, game_id, away_team, home_team):
+        if os.getenv('LUMIFY_API_KEY') and LumifyOddsProvider is not None:
+            provider = LumifyOddsProvider()
+            game = await asyncio.to_thread(provider.find_game, away_team, home_team)
+            if game:
+                self.odds[game_id] = self.format_odds(game)
+                logger.info(f"Updated odds for game {game_id} via Lumify")
+                return
+            logger.warning(f"Failed to update odds for game {game_id} via Lumify. Game not found.")
+            return
         date = datetime.now(pytz.timezone('America/New_York')).strftime("%Y-%m-%d")
         scraper = ScrapeSportsbookreview(sport="MLB", date=date)
         for game in scraper.games:
-            if game['home_team'] == home_team and game['away_team'] == away_team:
+            if self._teams_match(game['home_team'], home_team) and self._teams_match(game['away_team'], away_team):
                 self.odds[game_id] = self.format_odds(game)
                 logger.info(f"Updated odds for game {game_id}")
                 return
